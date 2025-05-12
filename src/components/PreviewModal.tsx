@@ -12,6 +12,7 @@ interface PreviewModalProps {
   backgroundColor: { hex: string; alpha: number };
   screenshotDimensions: ScreenshotDimensions;
   allModelsUploaded?: boolean; // Indicates if all models are uploaded
+  setProgress?: (progress: number) => void; // Function to update loading progress
 }
 
 const PreviewModal: React.FC<PreviewModalProps> = ({
@@ -20,10 +21,12 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
   onScreenshotTaken,
   backgroundColor,
   screenshotDimensions,
-  allModelsUploaded = true // Default to true for backward compatibility
+  allModelsUploaded = true, // Default to true for backward compatibility
+  setProgress,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isModelLoading, setIsModelLoading] = useState(true);
   
   // Store a reference to the engine's resize function
   const engineResizeRef = useRef<(() => void) | null>(null);
@@ -88,13 +91,21 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
     }
   }, [model, allModelsUploaded]);
 
+  // Listen for model loading state from ModelViewer
+  const handleModelLoadingChange = (loading: boolean) => {
+    setIsModelLoading(loading);
+  };
+
   if (!model) return null;
+
+  // Hide modal overlay with CSS while model is loading
+  const modalHidden = isModelLoading ? 'hidden' : '';
 
   const isPreview = !model.isLoading;
 
   return (
     <div 
-      className={`fixed inset-0 bg-black/60 flex items-center justify-center z-50 ${isFullscreen ? 'p-0' : 'p-4'}`}
+      className={`fixed inset-0 bg-black/60 flex items-center justify-center z-50 ${isFullscreen ? 'p-0' : 'p-4'} ${modalHidden}`}
       onClick={handleClickOutside}
     >
       <div 
@@ -141,6 +152,8 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
             backgroundColor={backgroundColor}
             screenshotDimensions={screenshotDimensions}
             registerEngineResize={registerEngineResize}
+            setProgress={setProgress}
+            onModelLoadingChange={handleModelLoadingChange}
           />
         </div>
       </div>

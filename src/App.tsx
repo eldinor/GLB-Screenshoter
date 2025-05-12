@@ -6,6 +6,21 @@ import PreviewModal from './components/PreviewModal';
 import Settings from './components/Settings';
 import { ModelFile, ScreenshotDimensions } from './types';
 
+// ProgressBar component
+const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
+  <div className="w-full max-w-lg mx-auto mt-4 mb-4">
+    <div className="w-full bg-gray-200 rounded h-4 overflow-hidden">
+      <div
+        className="bg-blue-600 h-4 transition-all"
+        style={{ width: `${progress}%` }}
+      />
+    </div>
+    <div className="text-center text-sm text-gray-700 dark:text-gray-300 mt-1">
+      {progress < 100 ? `Processing: ${progress}%` : 'Processing complete'}
+    </div>
+  </div>
+);
+
 function App() {
   const [models, setModels] = useState<ModelFile[]>([]);
   const [selectedModel, setSelectedModel] = useState<ModelFile | null>(null);
@@ -15,9 +30,11 @@ function App() {
     width: 1920,
     height: 1080,
   });
+  const [progress, setProgress] = useState<number>(0);
 
   const handleFilesDropped = useCallback((files: File[]) => {
     setIsProcessing(true);
+    setProgress(0);
     
     const newModels = files.map((file) => ({
       id: `model-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -55,6 +72,7 @@ function App() {
         }, 300);
       } else {
         setSelectedModel(null);
+        setProgress(0); // Reset progress when done
       }
     }
   }, [models, selectedModel]);
@@ -73,11 +91,13 @@ function App() {
 
   const handleCloseModal = useCallback(() => {
     setSelectedModel(null);
+    setProgress(0);
   }, []);
 
   const handleClearAll = useCallback(() => {
     setModels([]);
     setSelectedModel(null);
+    setProgress(0);
   }, []);
 
   return (
@@ -103,7 +123,10 @@ function App() {
         </header>
         
         <main>
-          <DropZone onFilesDropped={handleFilesDropped} isProcessing={isProcessing} />
+          {progress > 0 && progress < 100 && (
+            <ProgressBar progress={progress} />
+          )}
+          <DropZone onFilesDropped={handleFilesDropped} isProcessing={isProcessing || (progress > 0 && progress < 100)} />
           <ModelGallery 
             models={models} 
             onRemoveModel={handleRemoveModel}
@@ -118,6 +141,7 @@ function App() {
           onScreenshotTaken={handleScreenshotTaken}
           backgroundColor={backgroundColor}
           screenshotDimensions={screenshotDimensions}
+          setProgress={setProgress}
         />
 
         <footer className="mt-8 text-right">

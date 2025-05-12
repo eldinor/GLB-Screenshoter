@@ -29,6 +29,8 @@ interface ModelViewerProps {
   backgroundColor: { hex: string; alpha: number };
   screenshotDimensions: ScreenshotDimensions;
   registerEngineResize?: (resizeFn: (() => void) | null) => void;
+  setProgress?: (progress: number) => void;
+  onModelLoadingChange?: (loading: boolean) => void;
 }
 
 const ModelViewer: React.FC<ModelViewerProps> = ({
@@ -38,12 +40,21 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
   backgroundColor,
   screenshotDimensions,
   registerEngineResize,
+  setProgress,
+  onModelLoadingChange,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const sceneRef = useRef<Scene | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Notify parent about loading state
+  useEffect(() => {
+    if (onModelLoadingChange) {
+      onModelLoadingChange(isLoading);
+    }
+  }, [isLoading, onModelLoadingChange]);
 
   const validateGLBFile = async (file: File): Promise<boolean> => {
     return true;
@@ -64,12 +75,18 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
 
   const captureScreenshot = async (engine: Engine, camera: ArcRotateCamera, scene: Scene): Promise<string> => {
     try {
+      // Set progress to indicate screenshot preparation started
+      if (setProgress) setProgress(50);
+      
       scene.createDefaultEnvironment({
         createGround: false,
         createSkybox: false,
       });
       await waitForEnvironmentTextureReady(scene)
       await scene.whenReadyAsync();
+      
+      // Update progress to indicate scene is ready
+      if (setProgress) setProgress(75);
 
       camera.useFramingBehavior = true;
       const framingBehavior = camera.getBehaviorByName("Framing") as FramingBehavior;
@@ -97,6 +114,9 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
 
       camera.alpha = Math.PI / 4;
       camera.beta = Math.PI / 3;
+      
+      // Set progress to 100% when screenshot is complete
+      if (setProgress) setProgress(100);
 
       return screenshotUrl;
     } catch (err) {
@@ -132,6 +152,8 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
       try {
         setError(null);
         setIsLoading(true);
+        // Reset progress at the beginning
+        if (setProgress) setProgress(0);
 
         const isValid = await validateGLBFile(model.file);
         if (!isValid) return;
@@ -185,6 +207,9 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
 
         objectUrl = URL.createObjectURL(model.file);
 
+        // Reset progress to 0 at start of loading
+        if (setProgress) setProgress(0);
+
         const result = await SceneLoader.ImportMeshAsync(
           "",
           objectUrl,
@@ -192,8 +217,9 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
           scene,
           (evt) => {
             if (evt.lengthComputable) {
-              const progress = ((evt.loaded / evt.total) * 100).toFixed(2);
+              const progress = Math.round((evt.loaded / evt.total) * 100);
               console.log(`Loading progress: ${progress}%`);
+              if (setProgress) setProgress(progress);
             }
           },
           ".glb"
@@ -237,6 +263,8 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
             } catch (err) {
               console.error("Screenshot creation failed:", err);
               setError("Failed to create model preview.");
+              setIsLoading(false);
+              if (setProgress) setProgress(0); // Reset progress on error
             }
           });
         }
@@ -260,6 +288,8 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
       } catch (err) {
         console.error("Error loading GLB file:", err);
         setError("Failed to load the 3D model. Please ensure the file is a valid GLB file and try again.");
+        setIsLoading(false);
+        if (setProgress) setProgress(0); // Reset progress on error
       }
     };
 
