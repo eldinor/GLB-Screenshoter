@@ -11,6 +11,7 @@ interface PreviewModalProps {
   onScreenshotTaken: (modelId: string, screenshotUrl: string) => void;
   backgroundColor: { hex: string; alpha: number };
   screenshotDimensions: ScreenshotDimensions;
+  allModelsUploaded?: boolean; // Indicates if all models are uploaded
 }
 
 const PreviewModal: React.FC<PreviewModalProps> = ({
@@ -18,7 +19,8 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
   onClose,
   onScreenshotTaken,
   backgroundColor,
-  screenshotDimensions
+  screenshotDimensions,
+  allModelsUploaded = true // Default to true for backward compatibility
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -74,6 +76,17 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
       resizeObserver.disconnect();
     };
   }, [modalRef]);
+
+  // Disable body scroll when modal is open and all models are uploaded
+  useEffect(() => {
+    if (model && allModelsUploaded) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [model, allModelsUploaded]);
 
   if (!model) return null;
 
