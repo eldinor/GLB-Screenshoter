@@ -6,17 +6,26 @@ import PreviewModal from './components/PreviewModal';
 import Settings from './components/Settings';
 import { ModelFile, ScreenshotDimensions } from './types';
 
-// ProgressBar component
+// ProgressBar component with fixed height to prevent layout shift
 const ProgressBar: React.FC<{ progress: number }> = ({ progress }) => (
-  <div className="w-full max-w-lg mx-auto mt-4 mb-4">
-    <div className="w-full bg-gray-200 rounded h-4 overflow-hidden">
+  <div className="w-full max-w-lg mx-auto mt-4 mb-4" style={{ minHeight: 32 }}>
+    <div
+      className={`w-full bg-gray-200 rounded h-4 overflow-hidden transition-opacity duration-200 ${
+        progress > 0 && progress < 100 ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+    >
       <div
         className="bg-blue-600 h-4 transition-all"
         style={{ width: `${progress}%` }}
       />
     </div>
-    <div className="text-center text-sm text-gray-700 dark:text-gray-300 mt-1">
-      {progress < 100 ? `Processing: ${progress}%` : 'Processing complete'}
+    <div
+      className={`text-center text-sm text-gray-700 dark:text-gray-300 mt-1 transition-opacity duration-200 ${
+        progress > 0 && progress < 100 ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+      style={{ minHeight: 20 }}
+    >
+      {progress < 100 && progress > 0 ? `Processing: ${progress}%` : '\u00A0'}
     </div>
   </div>
 );
@@ -123,9 +132,7 @@ function App() {
         </header>
         
         <main>
-          {progress > 0 && progress < 100 && (
-            <ProgressBar progress={progress} />
-          )}
+          <ProgressBar progress={progress} />
           <DropZone onFilesDropped={handleFilesDropped} isProcessing={isProcessing || (progress > 0 && progress < 100)} />
           <ModelGallery 
             models={models} 
