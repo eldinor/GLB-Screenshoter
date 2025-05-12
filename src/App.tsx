@@ -20,7 +20,7 @@ function App() {
     setIsProcessing(true);
     
     const newModels = files.map((file) => ({
-      id: `model-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `model-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       file,
       name: file.name,
       screenshotUrl: null,

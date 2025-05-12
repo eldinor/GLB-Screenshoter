@@ -28,6 +28,7 @@ interface ModelViewerProps {
   isPreview?: boolean;
   backgroundColor: { hex: string; alpha: number };
   screenshotDimensions: ScreenshotDimensions;
+  registerEngineResize?: (resizeFn: (() => void) | null) => void;
 }
 
 const ModelViewer: React.FC<ModelViewerProps> = ({
@@ -36,6 +37,7 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
   isPreview = false,
   backgroundColor,
   screenshotDimensions,
+  registerEngineResize,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
@@ -103,6 +105,23 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
     }
   };
 
+  // Register engine.resize with parent component
+  useEffect(() => {
+    if (registerEngineResize && engineRef.current) {
+      registerEngineResize(() => {
+        if (engineRef.current) {
+          engineRef.current.resize();
+        }
+      });
+    }
+    
+    return () => {
+      if (registerEngineResize) {
+        registerEngineResize(null);
+      }
+    };
+  }, [registerEngineResize, engineRef.current]);
+
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -122,6 +141,16 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
           stencil: true,
         });
         engineRef.current = engine;
+        
+        // Register resize function with parent if engine is ready
+        if (registerEngineResize) {
+          registerEngineResize(() => {
+            if (engineRef.current) {
+              engineRef.current.resize();
+            }
+          });
+        }
+        
         const scene = new Scene(engine);
         sceneRef.current = scene;
 
@@ -244,6 +273,10 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
       if (sceneRef.current) {
         sceneRef.current.dispose();
       }
+      if (registerEngineResize) {
+        registerEngineResize(null);
+      }
+      
       if (engineRef.current) {
         engineRef.current.dispose();
       }
