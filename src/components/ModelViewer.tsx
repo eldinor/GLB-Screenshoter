@@ -13,7 +13,7 @@ import { FxaaPostProcess } from "@babylonjs/core/PostProcesses/fxaaPostProcess";
 import {SceneLoader} from '@babylonjs/core/Loading/sceneLoader'
 import { GLTFFileLoader } from '@babylonjs/loaders/glTF';
 
-import { ModelFile, ScreenshotDimensions } from "../types";
+import { ModelFile, ScreenshotDimensions, CameraAngles } from "../types";
 
 const gltfLoader = new GLTFFileLoader();
 gltfLoader.name = "gltf";
@@ -28,6 +28,7 @@ interface ModelViewerProps {
   isPreview?: boolean;
   backgroundColor: { hex: string; alpha: number };
   screenshotDimensions: ScreenshotDimensions;
+  cameraAngles: CameraAngles;
 }
 
 const ModelViewer: React.FC<ModelViewerProps> = ({
@@ -36,6 +37,7 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
   isPreview = false,
   backgroundColor,
   screenshotDimensions,
+  cameraAngles,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
@@ -69,10 +71,17 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
       await waitForEnvironmentTextureReady(scene)
       await scene.whenReadyAsync();
 
+      // Convert degrees to radians for BabylonJS
+      const alphaRadians = (cameraAngles.alpha * Math.PI) / 180;
+      const betaRadians = (cameraAngles.beta * Math.PI) / 180;
+      
+      // Set camera angles before taking screenshot
+      camera.alpha = alphaRadians;
+      camera.beta = betaRadians;
+
       camera.useFramingBehavior = true;
       const framingBehavior = camera.getBehaviorByName("Framing") as FramingBehavior;
       framingBehavior.framingTime = 0;
-      //  framingBehavior.elevationReturnTime = -1;
 
       if (scene.meshes.length) {
         camera.lowerRadiusLimit = null;
@@ -82,9 +91,6 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
         framingBehavior.zoomOnBoundingInfo(worldExtends.min, worldExtends.max);
       }
 
-  //    camera.alpha = Math.PI / 4;
-   //   camera.beta = Math.PI / 3;
-
       new FxaaPostProcess("fxaa", 1.0, camera);
 
       const screenshotUrl = await Tools.CreateScreenshotUsingRenderTargetAsync(engine, camera, {
@@ -92,9 +98,6 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
         height: screenshotDimensions.height,
         precision: 1,
       });
-
-      camera.alpha = Math.PI / 4;
-      camera.beta = Math.PI / 3;
 
       return screenshotUrl;
     } catch (err) {
@@ -132,7 +135,11 @@ const ModelViewer: React.FC<ModelViewerProps> = ({
           createSkybox: false,
         });
 
-        const camera = new ArcRotateCamera("camera", Math.PI / 4, Math.PI / 3, 10, Vector3.Zero(), scene);
+        // Convert degrees to radians for BabylonJS
+        const alphaRadians = (cameraAngles.alpha * Math.PI) / 180;
+        const betaRadians = (cameraAngles.beta * Math.PI) / 180;
+        
+        const camera = new ArcRotateCamera("camera", alphaRadians, betaRadians, 10, Vector3.Zero(), scene);
         camera.attachControl(canvasRef.current, true);
         camera.wheelPrecision = 50;
         camera.upperRadiusLimit = 50;

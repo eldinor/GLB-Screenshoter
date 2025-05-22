@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Maximize2, Minimize2 } from 'lucide-react';
 import ModelViewer from './ModelViewer';
-import { ModelFile, ScreenshotDimensions } from '../types';
+import { ModelFile, ScreenshotDimensions, CameraAngles } from '../types';
 
 interface PreviewModalProps {
   model: ModelFile | null;
@@ -9,6 +9,7 @@ interface PreviewModalProps {
   onScreenshotTaken: (modelId: string, screenshotUrl: string) => void;
   backgroundColor: { hex: string; alpha: number };
   screenshotDimensions: ScreenshotDimensions;
+  cameraAngles: CameraAngles;
 }
 
 const PreviewModal: React.FC<PreviewModalProps> = ({
@@ -16,7 +17,8 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
   onClose,
   onScreenshotTaken,
   backgroundColor,
-  screenshotDimensions
+  screenshotDimensions,
+  cameraAngles
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -175,6 +177,7 @@ const PreviewModal: React.FC<PreviewModalProps> = ({
               isPreview={isPreview}
               backgroundColor={backgroundColor}
               screenshotDimensions={screenshotDimensions}
+              cameraAngles={cameraAngles}
             />
           </div>
         </div>

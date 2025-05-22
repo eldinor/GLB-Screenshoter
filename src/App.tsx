@@ -4,7 +4,7 @@ import DropZone from './components/DropZone';
 import ModelGallery from './components/ModelGallery';
 import PreviewModal from './components/PreviewModal';
 import Settings from './components/Settings';
-import { ModelFile, ScreenshotDimensions } from './types';
+import { ModelFile, ScreenshotDimensions, CameraAngles } from './types';
 
 function App() {
   const [models, setModels] = useState<ModelFile[]>([]);
@@ -14,6 +14,10 @@ function App() {
   const [screenshotDimensions, setScreenshotDimensions] = useState<ScreenshotDimensions>({
     width: 1920,
     height: 1080,
+  });
+  const [cameraAngles, setCameraAngles] = useState<CameraAngles>({
+    alpha: 45, // 45 degrees
+    beta: 60,  // 60 degrees
   });
 
   const handleFilesDropped = useCallback((files: File[]) => {
@@ -94,11 +98,13 @@ function App() {
               onBackgroundColorChange={setBackgroundColor}
               screenshotDimensions={screenshotDimensions}
               onScreenshotDimensionsChange={setScreenshotDimensions}
+              cameraAngles={cameraAngles}
+              onCameraAnglesChange={setCameraAngles}
             />
           </div>
           <p className="text-gray-600 dark:text-gray-400 max-w-4xl">
             Upload and preview your 3D models. Simply drag and drop GLB files or click to select them. 
-            A screenshot will be automatically generated for each model. One may change background color, opacity and screenshot size in Settings.
+            A screenshot will be automatically generated for each model. One may change background color, opacity, camera angles and screenshot size in Settings.
           </p>
         </header>
         
@@ -118,6 +124,7 @@ function App() {
           onScreenshotTaken={handleScreenshotTaken}
           backgroundColor={backgroundColor}
           screenshotDimensions={screenshotDimensions}
+          cameraAngles={cameraAngles}
         />
 
         <footer className="mt-8 text-right">

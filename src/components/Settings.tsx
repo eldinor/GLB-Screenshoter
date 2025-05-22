@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Settings2 } from 'lucide-react';
-import { ScreenshotDimensions } from '../types';
+import { ScreenshotDimensions, CameraAngles } from '../types';
 
 interface Color {
   hex: string;
@@ -12,6 +12,8 @@ interface SettingsProps {
   onBackgroundColorChange: (color: Color) => void;
   screenshotDimensions: ScreenshotDimensions;
   onScreenshotDimensionsChange: (dimensions: ScreenshotDimensions) => void;
+  cameraAngles: CameraAngles;
+  onCameraAnglesChange: (angles: CameraAngles) => void;
 }
 
 const Settings: React.FC<SettingsProps> = ({
@@ -19,6 +21,8 @@ const Settings: React.FC<SettingsProps> = ({
   onBackgroundColorChange,
   screenshotDimensions,
   onScreenshotDimensionsChange,
+  cameraAngles,
+  onCameraAnglesChange,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -39,6 +43,20 @@ const Settings: React.FC<SettingsProps> = ({
       });
     }
   };
+
+  const handleCameraAngleChange = (angle: 'alpha' | 'beta', value: string) => {
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+      onCameraAnglesChange({
+        ...cameraAngles,
+        [angle]: numValue,
+      });
+    }
+  };
+
+  // Convert radians to degrees for display
+  const alphaDegrees = Math.round(cameraAngles.alpha);
+  const betaDegrees = Math.round(cameraAngles.beta);
 
   return (
     <div className="relative">
@@ -96,6 +114,40 @@ const Settings: React.FC<SettingsProps> = ({
                       onChange={(e) => handleAlphaChange(Number(e.target.value) / 100)}
                       className="w-full"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Camera Angles
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                        Horizontal (α): {alphaDegrees}°
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="360"
+                        value={alphaDegrees}
+                        onChange={(e) => handleCameraAngleChange('alpha', e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">
+                        Vertical (β): {betaDegrees}°
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="180"
+                        value={betaDegrees}
+                        onChange={(e) => handleCameraAngleChange('beta', e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 </div>
 
